@@ -1,6 +1,6 @@
 {
   "log_endpoint": "",
-  "google_log_endpoint": "https://script.google.com/macros/s/AKfycbzk8QStaPk3kr25K1af5HyN72RmPXe5X97sxvd2AULQCW3_06cOfr2CEhWQS1dm3Rf0FA/exec",
+  "google_log_endpoint": "https://script.google.com/macros/s/AKfycbzd9m1UMJeG-mcx-8ohjUj4btYYfvxRtG4KqkfdiyXW277dnrTb7DkMoTsliOaOsuVlKQ/exec",
   "log_endpoints": [],
   "max_trials": 12,
   "trials": [
