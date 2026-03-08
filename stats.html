@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survey Stats</title>
+  <style>
+    body { font-family: "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f4f6f8; color: #1d2733; }
+    .wrap { max-width: 1200px; margin: 12px auto; padding: 0 10px 20px; }
+    .card { background: #fff; border: 1px solid #d9dee5; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .muted { color: #667085; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #eef2f6; padding: 6px; text-align: left; }
+    th { background: #f8fafc; }
+    .mono { font-family: Consolas, monospace; }
+    .events { max-height: 260px; overflow: auto; background: #0b1220; color: #e7ecf4; padding: 8px; border-radius: 8px; }
+    .events div { margin: 0 0 4px 0; }
+    .plot { width: 100%; height: 280px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+    .pill { background: #eef2f7; border-radius: 999px; padding: 4px 8px; font-size: 12px; }
+    button, select { border: 1px solid #d2d8e1; border-radius: 8px; padding: 7px 10px; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card row">
+      <h2 style="margin:0;">Survey Stats</h2>
+      <span id="updated" class="muted"></span>
+      <span id="weightInfo" class="pill">Goal: % users with no visible difference vs baseline</span>
+    </div>
+
+    <div class="card row">
+      <label>Attention filter:</label>
+      <select id="attentionFilter">
+        <option value="pass_only">Pass attention only</option>
+        <option value="all">All responses</option>
+      </select>
+      <button id="refreshBtn">Refresh</button>
+      <button id="autoBtn">Auto: Off</button>
+      <span id="totals" class="muted"></span>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Main Outcome Table</h3>
+      <table id="summaryTable">
+        <thead>
+          <tr>
+            <th>candidate_profile</th>
+            <th>device_class</th>
+            <th>n_raw</th><th>n_weighted</th>
+            <th>no_diff_rate</th>
+            <th>baseline_better_rate</th>
+            <th>candidate_better_rate</th>
+            <th>avg_size_mb</th>
+            <th>avg_encode_sec</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">No Difference Rate by Profile / Device</h3>
+      <svg id="barPlot" class="plot" viewBox="0 0 1100 280" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Bitrate vs No Difference Rate</h3>
+      <svg id="linePlot" class="plot" viewBox="0 0 1100 280" preserveAspectRatio="none"></svg>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Recent Survey Logs</h3>
+      <div id="events" class="events mono"></div>
+    </div>
+  </div>
+
+  <script src="stats.js?v=20260308a" defer></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+{
+  "web_playback": {
+    "enabled": true,
+    "pix_fmt": "yuv420p",
+    "video_tag": "avc1"
+  },
+  "time_window": {
+    "pre_sec": 10,
+    "post_sec": 10
+  },
+  "sources": [
+    {
+      "id": "wide1",
+      "path": "D:/bigbro/survey/raw_videos/test_base.mp4",
+      "center": "00:01:01"
+    },
+    {
+      "id": "wide2",
+      "path": "D:/bigbro/survey/raw_videos/6492.mp4",
+      "center": "00:01:10"
+    }
+  ],
+  "baseline_profile": {
+    "name": "5120_10M",
+    "scale": "5120:1440",
+    "fps": "same",
+    "codec": "same",
+    "preset": "same",
+    "video_bitrate": "same",
+    "maxrate": "same",
+    "bufsize": "same",
+    "x264_params": "same",
+    "faststart": true,
+    "include_audio": false
+  },
+  "candidate_profiles": [
+    {
+      "name": "3840_SAME",
+      "scale": "3840:1080",
+      "fps": "same",
+      "codec": "same",
+      "preset": "same",
+      "video_bitrate": "same",
+      "maxrate": "same",
+      "bufsize": "same",
+      "x264_params": "same",
+      "faststart": "same",
+      "include_audio": "same"
+    },
+    {
+      "name": "3840_6M",
+      "scale": "3840:1080",
+      "fps": "same",
+      "codec": "same",
+      "preset": "same",
+      "video_bitrate": "6M",
+      "maxrate": "6M",
+      "bufsize": "12M",
+      "x264_params": "same",
+      "faststart": "same",
+      "include_audio": "same"
+    },
+    {
+      "name": "3840_4M",
+      "scale": "3840:1080",
+      "fps": "same",
+      "codec": "same",
+      "preset": "same",
+      "video_bitrate": "4M",
+      "maxrate": "4M",
+      "bufsize": "8M",
+      "x264_params": "same",
+      "faststart": "same",
+      "include_audio": "same"
+    },
+    {
+      "name": "3840_BAD",
+      "scale": "3840:1080",
+      "fps": "same",
+      "codec": "same",
+      "preset": "same",
+      "video_bitrate": "1M",
+      "maxrate": "1M",
+      "bufsize": "2M",
+      "x264_params": "same",
+      "faststart": "same",
+      "include_audio": "same"
+    },
+    {
+      "name": "3840_CODEC",
+      "scale": "3840:1080",
+      "fps": "same",
+      "codec": "same",
+      "preset": "slow",
+      "video_bitrate": "5M",
+      "maxrate": "5M",
+      "bufsize": "10M",
+      "x264_params": "keyint=40:min-keyint=40:scenecut=0:ref=4:bframes=4:b-adapt=2:me=umh:subme=8:merange=24:rc-lookahead=40:aq-mode=3:aq-strength=1.1:deblock=-1,-1",
+      "faststart": "same",
+      "include_audio": "same"
+    }
+  ]
+}

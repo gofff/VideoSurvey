@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Quality Survey</title>
+  <link rel="stylesheet" href="styles.css?v=20260308c" />
+</head>
+<body>
+  <main class="app">
+    <section id="intro" class="card">
+      <h1>Video Quality Survey</h1>
+      <p>You will compare two versions of the same clip. Switch between Version 1 and Version 2, then vote.</p>
+      <ul>
+        <li>Use both versions before voting.</li>
+        <li>At least 2 manual switches are required.</li>
+        <li>The study is anonymous.</li>
+      </ul>
+      <button id="startBtn" class="btn primary">Start</button>
+    </section>
+
+    <section id="trialSection" class="card hidden">
+      <div class="progress-row">
+        <span id="progressText">Trial 1 / 1</span>
+        <span id="switchText">Manual switches: 0 / 2</span>
+      </div>
+
+      <div class="player-shell">
+        <div id="videoViewport" class="viewport" aria-live="polite">
+          <video id="videoA" class="video" preload="auto" muted loop playsinline webkit-playsinline></video>
+          <video id="videoB" class="video hidden-video" preload="auto" muted loop playsinline webkit-playsinline></video>
+        </div>
+        <div id="controlsOverlay" class="overlay">
+          <div class="overlay-status">
+            <span id="currentVersionText">Now showing: Version 1</span>
+            <span id="playState" class="pill paused">Paused</span>
+          </div>
+          <div class="overlay-controls">
+            <button id="switchToV1" class="btn">Show Version 1</button>
+            <button id="switchToV2" class="btn">Show Version 2</button>
+            <button id="pauseBtn" class="btn">Play</button>
+            <button id="fullscreenBtn" class="btn">Fullscreen</button>
+          </div>
+          <div class="overlay-votes">
+            <button id="voteV1" class="btn vote" disabled>Version 1 better</button>
+            <button id="voteV2" class="btn vote" disabled>Version 2 better</button>
+            <button id="voteNoDiff" class="btn vote" disabled>No difference</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="doneSection" class="card hidden">
+      <h2>Complete</h2>
+      <p>Thank you. Your responses were recorded.</p>
+    </section>
+  </main>
+
+  <script src="app.js?v=20260308e" defer></script>
+</body>
+</html>

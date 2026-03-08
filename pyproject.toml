@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "survey"
+version = "0.1.0"
+description = "Anonymous perceptual video quality survey"
+authors = ["Survey Team"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+fastapi = ">=0.111.0,<1.0.0"
+uvicorn = {version = ">=0.30.0,<1.0.0", extras = ["standard"]}
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
