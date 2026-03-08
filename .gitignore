@@ -33,7 +33,6 @@ logs.jsonl
 
 # Local-only media and generated outputs
 raw_videos/
-videos/
 !videos/.gitkeep
 
 # Secrets / env files
