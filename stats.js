@@ -46,7 +46,7 @@
     const p = String(profile || "").toLowerCase();
     const m = p.match(/(\d+(?:\.\d+)?)\s*m/);
     if (m) return Number(m[1]);
-    if (p.includes("bad")) return 2;
+    if (p.includes("bad")) return 1;
     if (p.includes("same")) return 10;
     if (p.includes("codec")) return 5;
     return NaN;
@@ -101,7 +101,7 @@
     const plotW = w - pad.l - pad.r;
     const plotH = h - pad.t - pad.b;
 
-    const minX = 2;
+    const minX = 1;
     const maxX = 10;
     const xMap = (x) => pad.l + ((x - minX) / Math.max(0.0001, maxX - minX)) * plotW;
     const yMap = (y) => pad.t + (1 - y) * plotH;
@@ -123,7 +123,7 @@
       svg.appendChild(svgEl("text", { x: 860, y: 20 + 14 * ci, fill: c, "font-size": 11 })).appendChild(document.createTextNode(device));
     });
 
-    [2, 4, 5, 6, 8, 10].forEach((x) => {
+    [1, 2, 4, 5, 6, 8, 10].forEach((x) => {
       const gx = xMap(x);
       svg.appendChild(svgEl("line", { x1: gx, y1: pad.t, x2: gx, y2: pad.t + plotH, stroke: "#eef2f7" }));
       svg.appendChild(svgEl("text", { x: gx, y: h - 6, fill: "#374151", "font-size": 11, "text-anchor": "middle" })).appendChild(document.createTextNode(`${x} Mbps`));

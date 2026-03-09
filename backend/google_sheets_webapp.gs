@@ -239,7 +239,7 @@ function extractMbps_(profile) {
   if (!profile) return null;
   var p = String(profile).toLowerCase();
   var m = p.match(/(\d+(?:\.\d+)?)\s*m/);
-  if (p.indexOf("bad") >= 0) return 2;
+  if (p.indexOf("bad") >= 0) return 1;
   if (p.indexOf("same") >= 0) return 10;
   if (p.indexOf("codec") >= 0) return 5;
   if (!m) return null;

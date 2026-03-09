@@ -100,7 +100,7 @@ def _extract_mbps(profile: str) -> float | None:
     if m:
         return float(m.group(1))
     if "bad" in p:
-        return 2.0
+        return 1.0
     if "same" in p:
         return 10.0
     if "codec" in p:
