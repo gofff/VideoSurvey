@@ -20,7 +20,16 @@
   let appConfig = {};
 
   function pct(v) {
-    return `${(100 * Number(v || 0)).toFixed(1)}%`;
+    return `${(100 * asNum(v)).toFixed(1)}%`;
+  }
+
+  function asNum(v, fallback = 0) {
+    if (v === null || v === undefined || v === "") return fallback;
+    if (typeof v === "string") {
+      v = v.replace(",", ".").trim();
+    }
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
   }
 
   function clearSvg(svg) {
@@ -47,7 +56,7 @@
 
     rows.forEach((r, i) => {
       const y = pad.t + i * (barH + 4);
-      const x2 = pad.l + plotW * Number(r.no_diff_rate || 0);
+      const x2 = pad.l + plotW * asNum(r.no_diff_rate, 0);
       const label = `${r.candidate_profile} / ${r.device_class}`;
 
       svg.appendChild(svgEl("text", { x: 8, y: y + barH - 2, fill: "#344054", "font-size": 11 })).appendChild(document.createTextNode(label));
@@ -60,7 +69,9 @@
   function drawLinePlot(rows) {
     const svg = el.linePlot;
     clearSvg(svg);
-    const points = rows.filter((r) => Number.isFinite(r.bitrate_mbps));
+    const points = rows
+      .map((r) => ({ ...r, _bitrate: asNum(r.bitrate_mbps, NaN), _nodiff: asNum(r.no_diff_rate, 0) }))
+      .filter((r) => Number.isFinite(r._bitrate));
     if (!points.length) return;
 
     const byDevice = new Map();
@@ -76,7 +87,7 @@
     const plotW = w - pad.l - pad.r;
     const plotH = h - pad.t - pad.b;
 
-    const xs = points.map((p) => p.bitrate_mbps);
+    const xs = points.map((p) => p._bitrate);
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
     const xMap = (x) => pad.l + ((x - minX) / Math.max(0.0001, maxX - minX)) * plotW;
@@ -88,13 +99,13 @@
     const colors = ["#d62728", "#1f77b4", "#2ca02c", "#9467bd"];
     let ci = 0;
     byDevice.forEach((arr, device) => {
-      arr.sort((a, b) => a.bitrate_mbps - b.bitrate_mbps);
+      arr.sort((a, b) => a._bitrate - b._bitrate);
       const c = colors[ci % colors.length];
       ci += 1;
-      const d = arr.map((p, i) => `${i === 0 ? "M" : "L"}${xMap(p.bitrate_mbps)},${yMap(Number(p.no_diff_rate || 0))}`).join(" ");
+      const d = arr.map((p, i) => `${i === 0 ? "M" : "L"}${xMap(p._bitrate)},${yMap(p._nodiff)}`).join(" ");
       svg.appendChild(svgEl("path", { d, fill: "none", stroke: c, "stroke-width": 2 }));
       arr.forEach((p) => {
-        svg.appendChild(svgEl("circle", { cx: xMap(p.bitrate_mbps), cy: yMap(Number(p.no_diff_rate || 0)), r: 3, fill: c }));
+        svg.appendChild(svgEl("circle", { cx: xMap(p._bitrate), cy: yMap(p._nodiff), r: 3, fill: c }));
       });
       svg.appendChild(svgEl("text", { x: 860, y: 20 + 14 * ci, fill: c, "font-size": 11 })).appendChild(document.createTextNode(device));
     });
