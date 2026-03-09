@@ -119,8 +119,10 @@ function statsResponse_(e) {
         candidate_w: 0,
         nodiff_w: 0,
         bitrate_mbps: extractMbps_(profile),
-        avg_size_mb: null,
-        avg_encode_sec: null
+        size_mb_sum: 0,
+        size_mb_n: 0,
+        encode_sec_sum: 0,
+        encode_sec_n: 0
       };
     }
     var w = (weightByPid[pid] != null) ? weightByPid[pid] : 1;
@@ -129,6 +131,16 @@ function statsResponse_(e) {
     if (choice === "baseline") grouped[key].baseline_w += w;
     if (choice === "candidate") grouped[key].candidate_w += w;
     if (choice === "nodiff") grouped[key].nodiff_w += w;
+    var sizeMb = parseOptNumber_(r.candidate_size_mb);
+    if (sizeMb !== null) {
+      grouped[key].size_mb_sum += sizeMb;
+      grouped[key].size_mb_n += 1;
+    }
+    var encSec = parseOptNumber_(r.candidate_encode_sec);
+    if (encSec !== null) {
+      grouped[key].encode_sec_sum += encSec;
+      grouped[key].encode_sec_n += 1;
+    }
   });
 
   var summary = Object.keys(grouped).sort().map(function (k) {
@@ -140,11 +152,13 @@ function statsResponse_(e) {
       bitrate_mbps: g.bitrate_mbps,
       n_trials_raw: g.n_trials_raw,
       n_trials_weighted: g.n_trials_weighted,
+      not_worse_rate: (g.nodiff_w + g.candidate_w) / nw,
       no_diff_rate: g.nodiff_w / nw,
       baseline_better_rate: g.baseline_w / nw,
+      better_than_baseline_rate: g.candidate_w / nw,
       candidate_better_rate: g.candidate_w / nw,
-      avg_size_mb: g.avg_size_mb,
-      avg_encode_sec: g.avg_encode_sec
+      avg_size_mb: g.size_mb_n > 0 ? (g.size_mb_sum / g.size_mb_n) : null,
+      avg_encode_sec: g.encode_sec_n > 0 ? (g.encode_sec_sum / g.encode_sec_n) : null
     };
   });
 
@@ -230,6 +244,12 @@ function extractMbps_(profile) {
 
 function asString_(v) {
   return (v === null || v === undefined) ? "" : String(v);
+}
+
+function parseOptNumber_(v) {
+  if (v === null || v === undefined || v === "") return null;
+  var n = Number(v);
+  return isFinite(n) ? n : null;
 }
 
 function getLogsSheet_() {

@@ -535,6 +535,9 @@ def main() -> None:
                     "baseline": f"videos/{baseline_out_name}",
                     "candidate": f"videos/{candidate_out_name}",
                     "candidate_profile": profile_name,
+                    "baseline_size_mb": round(base_size_mb, 6) if base_size_mb is not None else None,
+                    "candidate_size_mb": round(cand_size_mb, 6) if cand_size_mb is not None else None,
+                    "candidate_encode_sec": round(elapsed, 6),
                 }
             )
 

@@ -26,7 +26,7 @@
     <div class="card row">
       <h2 style="margin:0;">Survey Stats</h2>
       <span id="updated" class="muted"></span>
-      <span id="weightInfo" class="pill">Goal: % users with no visible difference vs baseline</span>
+      <span id="weightInfo" class="pill">Goal: maximize not-worse rate (no-diff + better-than-baseline)</span>
     </div>
 
     <div class="card row">
@@ -48,9 +48,10 @@
             <th>candidate_profile</th>
             <th>device_class</th>
             <th>n_raw</th><th>n_weighted</th>
+            <th>not_worse_rate</th>
             <th>no_diff_rate</th>
+            <th>better_than_baseline_rate</th>
             <th>baseline_better_rate</th>
-            <th>candidate_better_rate</th>
             <th>avg_size_mb</th>
             <th>avg_encode_sec</th>
           </tr>
@@ -60,12 +61,12 @@
     </div>
 
     <div class="card">
-      <h3 style="margin-top:0;">No Difference Rate by Profile / Device</h3>
+      <h3 style="margin-top:0;">Not Worse Rate by Profile / Device</h3>
       <svg id="barPlot" class="plot" viewBox="0 0 1100 280" preserveAspectRatio="none"></svg>
     </div>
 
     <div class="card">
-      <h3 style="margin-top:0;">Bitrate vs No Difference Rate</h3>
+      <h3 style="margin-top:0;">Bitrate vs Not Worse Rate</h3>
       <svg id="linePlot" class="plot" viewBox="0 0 1100 280" preserveAspectRatio="none"></svg>
     </div>
 
@@ -75,6 +76,6 @@
     </div>
   </div>
 
-  <script src="stats.js?v=20260309b" defer></script>
+  <script src="stats.js?v=20260309c" defer></script>
 </body>
 </html>

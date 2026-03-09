@@ -1,7 +1,7 @@
 {
   "web_playback": {
     "enabled": true,
-    "pix_fmt": "yuv420p",
+    "pix_fmt": "yuvj420p",
     "video_tag": "avc1"
   },
   "time_window": {

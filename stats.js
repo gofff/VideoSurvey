@@ -56,13 +56,13 @@
 
     rows.forEach((r, i) => {
       const y = pad.t + i * (barH + 4);
-      const x2 = pad.l + plotW * asNum(r.no_diff_rate, 0);
+      const x2 = pad.l + plotW * asNum(r.not_worse_rate, 0);
       const label = `${r.candidate_profile} / ${r.device_class}`;
 
       svg.appendChild(svgEl("text", { x: 8, y: y + barH - 2, fill: "#344054", "font-size": 11 })).appendChild(document.createTextNode(label));
       svg.appendChild(svgEl("rect", { x: pad.l, y, width: plotW, height: barH, fill: "#edf2f7" }));
       svg.appendChild(svgEl("rect", { x: pad.l, y, width: Math.max(1, x2 - pad.l), height: barH, fill: "#1f77b4" }));
-      svg.appendChild(svgEl("text", { x: x2 + 6, y: y + barH - 2, fill: "#111827", "font-size": 11 })).appendChild(document.createTextNode(pct(r.no_diff_rate)));
+      svg.appendChild(svgEl("text", { x: x2 + 6, y: y + barH - 2, fill: "#111827", "font-size": 11 })).appendChild(document.createTextNode(pct(r.not_worse_rate)));
     });
   }
 
@@ -70,7 +70,7 @@
     const svg = el.linePlot;
     clearSvg(svg);
     const points = rows
-      .map((r) => ({ ...r, _bitrate: asNum(r.bitrate_mbps, NaN), _nodiff: asNum(r.no_diff_rate, 0) }))
+      .map((r) => ({ ...r, _bitrate: asNum(r.bitrate_mbps, NaN), _notworse: asNum(r.not_worse_rate, 0) }))
       .filter((r) => Number.isFinite(r._bitrate));
     if (!points.length) return;
 
@@ -102,10 +102,10 @@
       arr.sort((a, b) => a._bitrate - b._bitrate);
       const c = colors[ci % colors.length];
       ci += 1;
-      const d = arr.map((p, i) => `${i === 0 ? "M" : "L"}${xMap(p._bitrate)},${yMap(p._nodiff)}`).join(" ");
+      const d = arr.map((p, i) => `${i === 0 ? "M" : "L"}${xMap(p._bitrate)},${yMap(p._notworse)}`).join(" ");
       svg.appendChild(svgEl("path", { d, fill: "none", stroke: c, "stroke-width": 2 }));
       arr.forEach((p) => {
-        svg.appendChild(svgEl("circle", { cx: xMap(p._bitrate), cy: yMap(p._nodiff), r: 3, fill: c }));
+        svg.appendChild(svgEl("circle", { cx: xMap(p._bitrate), cy: yMap(p._notworse), r: 3, fill: c }));
       });
       svg.appendChild(svgEl("text", { x: 860, y: 20 + 14 * ci, fill: c, "font-size": 11 })).appendChild(document.createTextNode(device));
     });
@@ -119,7 +119,7 @@
     const t = data.totals || {};
     el.totals.textContent = `participants(filtered): ${t.participants_filtered || 0}, trials(main): ${t.main_trials_filtered || 0}, events: ${t.events_filtered || 0}`;
     el.updated.textContent = `updated: ${new Date().toLocaleTimeString()}`;
-    el.weightInfo.textContent = `Goal: % no-difference vs baseline (failed attention weight=${Number(data.attention_fail_weight || 0).toFixed(2)})`;
+    el.weightInfo.textContent = `Goal: maximize not-worse rate (failed attention weight=${Number(data.attention_fail_weight || 0).toFixed(2)})`;
 
     el.summaryBody.innerHTML = "";
     (data.summary || []).forEach((r) => {
@@ -129,9 +129,10 @@
         <td>${r.device_class || ""}</td>
         <td>${r.n_trials_raw || 0}</td>
         <td>${r.n_trials_weighted == null ? "-" : Number(r.n_trials_weighted).toFixed(2)}</td>
+        <td>${pct(r.not_worse_rate)}</td>
         <td>${pct(r.no_diff_rate)}</td>
+        <td>${pct(r.better_than_baseline_rate ?? r.candidate_better_rate)}</td>
         <td>${pct(r.baseline_better_rate)}</td>
-        <td>${pct(r.candidate_better_rate)}</td>
         <td>${r.avg_size_mb == null ? "-" : Number(r.avg_size_mb).toFixed(2)}</td>
         <td>${r.avg_encode_sec == null ? "-" : Number(r.avg_encode_sec).toFixed(2)}</td>`;
       el.summaryBody.appendChild(tr);

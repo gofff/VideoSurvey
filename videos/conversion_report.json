@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-08T14:04:23.895497+00:00",
+  "generated_at": "2026-03-09T00:43:59.516152+00:00",
   "dry_run": false,
   "entries": [
     {
@@ -24,7 +24,7 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide1_3840_SAME.mp4",
       "start_sec": 51.0,
       "duration_sec": 20.0,
-      "process_time_sec": 10.368475,
+      "process_time_sec": 9.423998,
       "size_bytes": 38017012,
       "size_mb": 36.255848
     },
@@ -37,9 +37,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide1_3840_6M.mp4",
       "start_sec": 51.0,
       "duration_sec": 20.0,
-      "process_time_sec": 8.502445,
-      "size_bytes": 13822171,
-      "size_mb": 13.181849
+      "process_time_sec": 7.825543,
+      "size_bytes": 13855043,
+      "size_mb": 13.213199
     },
     {
       "kind": "candidate",
@@ -50,9 +50,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide1_3840_4M.mp4",
       "start_sec": 51.0,
       "duration_sec": 20.0,
-      "process_time_sec": 8.161595,
-      "size_bytes": 9095127,
-      "size_mb": 8.673789
+      "process_time_sec": 7.32669,
+      "size_bytes": 9163193,
+      "size_mb": 8.738702
     },
     {
       "kind": "candidate",
@@ -63,9 +63,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide1_3840_BAD.mp4",
       "start_sec": 51.0,
       "duration_sec": 20.0,
-      "process_time_sec": 6.951525,
-      "size_bytes": 2123553,
-      "size_mb": 2.025178
+      "process_time_sec": 6.099241,
+      "size_bytes": 2124214,
+      "size_mb": 2.025808
     },
     {
       "kind": "candidate",
@@ -76,9 +76,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide1_3840_CODEC.mp4",
       "start_sec": 51.0,
       "duration_sec": 20.0,
-      "process_time_sec": 17.772168,
-      "size_bytes": 12958779,
-      "size_mb": 12.358455
+      "process_time_sec": 17.125908,
+      "size_bytes": 12952161,
+      "size_mb": 12.352143
     },
     {
       "kind": "baseline",
@@ -102,7 +102,7 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide2_3840_SAME.mp4",
       "start_sec": 60.0,
       "duration_sec": 20.0,
-      "process_time_sec": 8.391628,
+      "process_time_sec": 7.647216,
       "size_bytes": 18842379,
       "size_mb": 17.969493
     },
@@ -115,9 +115,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide2_3840_6M.mp4",
       "start_sec": 60.0,
       "duration_sec": 20.0,
-      "process_time_sec": 8.007355,
-      "size_bytes": 13911441,
-      "size_mb": 13.266984
+      "process_time_sec": 7.270339,
+      "size_bytes": 13830404,
+      "size_mb": 13.189701
     },
     {
       "kind": "candidate",
@@ -128,9 +128,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide2_3840_4M.mp4",
       "start_sec": 60.0,
       "duration_sec": 20.0,
-      "process_time_sec": 7.547842,
-      "size_bytes": 9070580,
-      "size_mb": 8.650379
+      "process_time_sec": 6.800339,
+      "size_bytes": 9010155,
+      "size_mb": 8.592753
     },
     {
       "kind": "candidate",
@@ -141,9 +141,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide2_3840_BAD.mp4",
       "start_sec": 60.0,
       "duration_sec": 20.0,
-      "process_time_sec": 6.099384,
-      "size_bytes": 2105167,
-      "size_mb": 2.007644
+      "process_time_sec": 5.51824,
+      "size_bytes": 2105682,
+      "size_mb": 2.008135
     },
     {
       "kind": "candidate",
@@ -154,9 +154,9 @@
       "output_path": "D:\\bigbro\\survey\\videos\\wide2_3840_CODEC.mp4",
       "start_sec": 60.0,
       "duration_sec": 20.0,
-      "process_time_sec": 14.720404,
-      "size_bytes": 12654425,
-      "size_mb": 12.0682
+      "process_time_sec": 13.666861,
+      "size_bytes": 12639950,
+      "size_mb": 12.054396
     }
   ]
 }

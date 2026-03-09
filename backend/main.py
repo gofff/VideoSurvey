@@ -176,6 +176,10 @@ def get_stats(
             "baseline_w": 0.0,
             "candidate_w": 0.0,
             "nodiff_w": 0.0,
+            "size_mb_sum": 0.0,
+            "size_mb_n": 0.0,
+            "encode_sec_sum": 0.0,
+            "encode_sec_n": 0.0,
         }
     )
 
@@ -198,6 +202,14 @@ def get_stats(
             grouped[key]["candidate_w"] += w
         elif choice == "nodiff":
             grouped[key]["nodiff_w"] += w
+        size_mb = r.get("candidate_size_mb")
+        if isinstance(size_mb, (int, float)):
+            grouped[key]["size_mb_sum"] += float(size_mb)
+            grouped[key]["size_mb_n"] += 1.0
+        encode_sec = r.get("candidate_encode_sec")
+        if isinstance(encode_sec, (int, float)):
+            grouped[key]["encode_sec_sum"] += float(encode_sec)
+            grouped[key]["encode_sec_n"] += 1.0
 
     conv = _conversion_stats()
     summary_rows: list[dict[str, Any]] = []
@@ -209,7 +221,14 @@ def get_stats(
         no_diff_rate = s["nodiff_w"] / n_weighted
         baseline_rate = s["baseline_w"] / n_weighted
         candidate_rate = s["candidate_w"] / n_weighted
+        not_worse_rate = (s["nodiff_w"] + s["candidate_w"]) / n_weighted
         cstats = conv.get(profile, {})
+        avg_size_mb = cstats.get("avg_size_mb")
+        if avg_size_mb is None and s["size_mb_n"] > 0:
+            avg_size_mb = s["size_mb_sum"] / s["size_mb_n"]
+        avg_encode_sec = cstats.get("avg_encode_sec")
+        if avg_encode_sec is None and s["encode_sec_n"] > 0:
+            avg_encode_sec = s["encode_sec_sum"] / s["encode_sec_n"]
         summary_rows.append(
             {
                 "candidate_profile": profile,
@@ -217,11 +236,13 @@ def get_stats(
                 "bitrate_mbps": _extract_mbps(profile),
                 "n_trials_raw": n_raw,
                 "n_trials_weighted": n_weighted,
+                "not_worse_rate": not_worse_rate,
                 "no_diff_rate": no_diff_rate,
                 "baseline_better_rate": baseline_rate,
+                "better_than_baseline_rate": candidate_rate,
                 "candidate_better_rate": candidate_rate,
-                "avg_size_mb": cstats.get("avg_size_mb"),
-                "avg_encode_sec": cstats.get("avg_encode_sec"),
+                "avg_size_mb": avg_size_mb,
+                "avg_encode_sec": avg_encode_sec,
             }
         )
 
