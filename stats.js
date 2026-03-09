@@ -137,7 +137,13 @@
     el.weightInfo.textContent = `Goal: maximize not-worse rate (failed attention weight=${Number(data.attention_fail_weight || 0).toFixed(2)})`;
 
     el.summaryBody.innerHTML = "";
-    (data.summary || []).forEach((r) => {
+    const summaryRows = data.summary || [];
+    if (!summaryRows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="10">No rows for current filter. If attention check was failed, switch filter to "All responses".</td>`;
+      el.summaryBody.appendChild(tr);
+    }
+    summaryRows.forEach((r) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${r.candidate_profile || ""}</td>
@@ -160,8 +166,8 @@
       el.events.appendChild(div);
     });
 
-    drawBarPlot(data.summary || []);
-    drawLinePlot(data.summary || []);
+    drawBarPlot(summaryRows);
+    drawLinePlot(summaryRows);
   }
 
   async function loadConfig() {

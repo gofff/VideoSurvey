@@ -122,17 +122,47 @@ def _to_float(v: Any) -> float | None:
     return None
 
 
-def _dedupe_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    unique: dict[tuple[str, str], dict[str, Any]] = {}
-    passthrough: list[dict[str, Any]] = []
+def _parse_iso_ms(v: Any) -> int | None:
+    if not isinstance(v, str) or not v:
+        return None
+    s = v.replace("Z", "+00:00")
+    try:
+        from datetime import datetime
+
+        dt = datetime.fromisoformat(s)
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        return None
+
+
+def _dedupe_rows(rows: list[dict[str, Any]], dupe_window_ms: int = 15000) -> list[dict[str, Any]]:
+    # Only collapse likely accidental double-submit for the same trial in a short window.
+    out: list[dict[str, Any]] = []
+    last_seen: dict[tuple[str, str], tuple[int | None, int]] = {}
     for r in rows:
         pid = r.get("participant_id")
         trial_id = r.get("trial_id")
-        if isinstance(pid, str) and isinstance(trial_id, str) and trial_id:
-            unique[(pid, trial_id)] = r
-        else:
-            passthrough.append(r)
-    return passthrough + list(unique.values())
+        if not (isinstance(pid, str) and isinstance(trial_id, str) and trial_id):
+            out.append(r)
+            continue
+
+        key = (pid, trial_id)
+        ts = _parse_iso_ms(r.get("timestamp"))
+        prev = last_seen.get(key)
+        if prev is None:
+            out.append(r)
+            last_seen[key] = (ts, len(out) - 1)
+            continue
+
+        prev_ts, prev_idx = prev
+        if ts is not None and prev_ts is not None and abs(ts - prev_ts) <= dupe_window_ms:
+            out[prev_idx] = r
+            last_seen[key] = (ts, prev_idx)
+            continue
+
+        out.append(r)
+        last_seen[key] = (ts, len(out) - 1)
+    return out
 
 
 def _conversion_stats() -> dict[str, dict[str, float]]:
@@ -296,20 +326,14 @@ def get_stats(
         pid = r.get("participant_id")
         if not isinstance(pid, str):
             continue
-        baseline_side = r.get("baseline_side")
         choice = r.get("choice")
         trial_id = r.get("trial_id")
         device = r.get("device_class")
         picked = "unknown"
-        if choice == "nodiff":
+        if choice in {"baseline", "candidate"}:
+            picked = choice
+        elif choice == "nodiff":
             picked = "no difference"
-        elif baseline_side in {"A", "B"} and choice in {"baseline", "candidate"}:
-            if (baseline_side == "A" and choice == "baseline") or (
-                baseline_side == "B" and choice == "candidate"
-            ):
-                picked = "version1"
-            else:
-                picked = "version2"
         events.append(
             {
                 "text": (

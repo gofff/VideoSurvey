@@ -176,17 +176,10 @@ function statsResponse_(e) {
     var r = rows[i];
     var pid = asString_(r.participant_id);
     if (!pid) continue;
-    var baselineSide = asString_(r.baseline_side);
     var choice = asString_(r.choice);
     var picked = "unknown";
-    if (choice === "nodiff") picked = "no difference";
-    else if (baselineSide === "A" || baselineSide === "B") {
-      if ((baselineSide === "A" && choice === "baseline") || (baselineSide === "B" && choice === "candidate")) {
-        picked = "version1";
-      } else if (choice === "baseline" || choice === "candidate") {
-        picked = "version2";
-      }
-    }
+    if (choice === "baseline" || choice === "candidate") picked = choice;
+    else if (choice === "nodiff") picked = "no difference";
     events.push({
       text: aliasByPid[pid] + " on " + (asString_(r.device_class) || "unknown_device") + " in trial " + (asString_(r.trial_id) || "unknown_trial") + " chose " + picked,
       timestamp: asString_(r.timestamp)
@@ -256,18 +249,41 @@ function extractMbps_(profile) {
 }
 
 function dedupeRows_(rows) {
-  var unique = {};
-  var pass = [];
+  var out = [];
+  var lastSeen = {};
+  var windowMs = 15000;
   rows.forEach(function (r) {
     var pid = asString_(r.participant_id);
     var trialId = asString_(r.trial_id);
-    if (pid && trialId) {
-      unique[pid + "||" + trialId] = r;
-    } else {
-      pass.push(r);
+    if (!pid || !trialId) {
+      out.push(r);
+      return;
     }
+    var k = pid + "||" + trialId;
+    var ts = parseIsoMs_(r.timestamp);
+    if (!lastSeen[k]) {
+      out.push(r);
+      lastSeen[k] = { ts: ts, idx: out.length - 1 };
+      return;
+    }
+    var prev = lastSeen[k];
+    if (ts !== null && prev.ts !== null && Math.abs(ts - prev.ts) <= windowMs) {
+      out[prev.idx] = r;
+      lastSeen[k] = { ts: ts, idx: prev.idx };
+      return;
+    }
+    out.push(r);
+    lastSeen[k] = { ts: ts, idx: out.length - 1 };
   });
-  return pass.concat(Object.keys(unique).map(function (k) { return unique[k]; }));
+  return out;
+}
+
+function parseIsoMs_(v) {
+  if (v === null || v === undefined) return null;
+  var s = String(v);
+  if (!s) return null;
+  var ms = Date.parse(s);
+  return isFinite(ms) ? ms : null;
 }
 
 function asString_(v) {

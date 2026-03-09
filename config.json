@@ -1,6 +1,6 @@
 {
   "log_endpoint": "",
-  "google_log_endpoint": "https://script.google.com/macros/s/AKfycbzEhTmBez6g3Zvq2McRII3wPZtX3jKOJh0mYvsFKqlBpCFAnu-jlFipNUjqrz0-AfftKg/exec",
+  "google_log_endpoint": "https://script.google.com/macros/s/AKfycbwjhXOECOwGwaO4cqMn9C5y4bLkk-Cx-2qoGlAga4fDOwF4Fql-_axBpxvP2ou_2DJbQA/exec",
   "log_endpoints": [],
   "stats_source": "auto",
   "stats_endpoint": "",
