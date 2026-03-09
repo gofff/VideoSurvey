@@ -1,7 +1,10 @@
 {
   "log_endpoint": "",
-  "google_log_endpoint": "https://script.google.com/macros/s/AKfycbxDVlvladaRA7-eLtBz1QGIoIYDdh7YMmeVlkT24k1fzZksM2p_wrOUBqDsni_1r405_g/exec",
+  "google_log_endpoint": "https://script.google.com/macros/s/AKfycbxyiRDbUT-GljEqe2x9uh-hcExZ6TNDOvec8OcmUkytdaJ9C4koxANv78udxdkwUtaMSg/exec",
   "log_endpoints": [],
+  "stats_source": "auto",
+  "stats_endpoint": "",
+  "google_stats_endpoint": "",
   "max_trials": 12,
   "trials": [
     {

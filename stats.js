@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
-  const API_BASE = `${location.protocol}//${location.hostname}:8000`;
+  const DEFAULT_FASTAPI = `${location.protocol}//${location.hostname}:8000/stats`;
   const el = {
+    sourceSelect: document.getElementById("sourceSelect"),
     attentionFilter: document.getElementById("attentionFilter"),
     refreshBtn: document.getElementById("refreshBtn"),
     autoBtn: document.getElementById("autoBtn"),
@@ -16,6 +17,7 @@
   };
 
   let autoTimer = null;
+  let appConfig = {};
 
   function pct(v) {
     return `${(100 * Number(v || 0)).toFixed(1)}%`;
@@ -103,8 +105,8 @@
   }
 
   function render(data) {
-    const t = data.totals;
-    el.totals.textContent = `participants(filtered): ${t.participants_filtered}, trials(main): ${t.main_trials_filtered}, events: ${t.events_filtered}`;
+    const t = data.totals || {};
+    el.totals.textContent = `participants(filtered): ${t.participants_filtered || 0}, trials(main): ${t.main_trials_filtered || 0}, events: ${t.events_filtered || 0}`;
     el.updated.textContent = `updated: ${new Date().toLocaleTimeString()}`;
     el.weightInfo.textContent = `Goal: % no-difference vs baseline (failed attention weight=${Number(data.attention_fail_weight || 0).toFixed(2)})`;
 
@@ -135,13 +137,47 @@
     drawLinePlot(data.summary || []);
   }
 
-  async function refresh() {
+  async function loadConfig() {
+    try {
+      const res = await fetch("config.json", { cache: "no-store" });
+      if (!res.ok) return {};
+      return await res.json();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function resolveMode() {
+    const selected = el.sourceSelect.value;
+    if (selected && selected !== "auto") return selected;
+    if (appConfig.stats_source && appConfig.stats_source !== "auto") return appConfig.stats_source;
+    if (appConfig.google_stats_endpoint || appConfig.google_log_endpoint) return "google";
+    return "fastapi";
+  }
+
+  function buildStatsUrl() {
     const q = new URLSearchParams({
       attention_filter: el.attentionFilter.value,
       attention_fail_weight: "0.35",
       max_events: "300"
     });
-    const res = await fetch(`${API_BASE}/stats?${q.toString()}`);
+
+    const mode = resolveMode();
+    if (mode === "google") {
+      const endpoint = appConfig.google_stats_endpoint || appConfig.google_log_endpoint;
+      if (!endpoint) throw new Error("google stats endpoint is not configured");
+      const url = new URL(endpoint, window.location.href);
+      q.set("action", "stats");
+      return `${url.toString()}?${q.toString()}`;
+    }
+
+    const endpoint = appConfig.stats_endpoint || DEFAULT_FASTAPI;
+    return `${endpoint}?${q.toString()}`;
+  }
+
+  async function refresh() {
+    const url = buildStatsUrl();
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`stats fetch failed (${res.status})`);
     const data = await res.json();
     render(data);
@@ -166,7 +202,16 @@
   el.attentionFilter.addEventListener("change", () => {
     refresh().catch((err) => alert(err.message));
   });
+  el.sourceSelect.addEventListener("change", () => {
+    refresh().catch((err) => alert(err.message));
+  });
   el.autoBtn.addEventListener("click", toggleAuto);
 
-  refresh().catch((err) => alert(err.message));
+  (async () => {
+    appConfig = await loadConfig();
+    if (appConfig.stats_source && ["auto", "google", "fastapi"].includes(appConfig.stats_source)) {
+      el.sourceSelect.value = appConfig.stats_source;
+    }
+    refresh().catch((err) => alert(err.message));
+  })();
 })();
