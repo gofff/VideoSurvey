@@ -5,7 +5,7 @@
   "stats_source": "auto",
   "stats_endpoint": "",
   "google_stats_endpoint": "",
-  "max_trials": 12,
+  "max_trials": 16,
   "trials": [
     {
       "id": "wide1_3840_4M",

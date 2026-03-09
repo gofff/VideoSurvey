@@ -127,8 +127,9 @@
     }));
 
     const combined = insertAtRandomPositions(baseTrials, attentionChecks);
-    const maxTrials = Number.isFinite(config.max_trials) ? config.max_trials : 12;
-    return combined.slice(0, Math.min(12, maxTrials));
+    const parsedMax = Number(config.max_trials);
+    const maxTrials = Number.isFinite(parsedMax) && parsedMax > 0 ? Math.floor(parsedMax) : 16;
+    return combined.slice(0, Math.min(combined.length, maxTrials));
   }
 
   function randomizeAssignment(trial) {
@@ -430,14 +431,14 @@
   async function postLog(endpoint, payload) {
     if (isGoogleScriptEndpoint(endpoint)) {
       try {
-        await fetch(endpoint, {
+        await withTimeout(fetch(endpoint, {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload),
           keepalive: true,
           cache: "no-store"
-        });
+        }), 3000);
       } catch (_) {
         // Ignore optional secondary logger failures.
       }
@@ -445,12 +446,12 @@
     }
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await withTimeout(fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         keepalive: true
-      });
+      }), 3000);
       if (!res.ok) throw new Error("log failed");
     } catch (_) {
       const data = JSON.stringify(payload);
@@ -499,6 +500,15 @@
 
     const resolved = rawList.map(resolveLogEndpoint).filter(Boolean);
     return [...new Set(resolved)];
+  }
+
+  function withTimeout(promise, timeoutMs) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        window.setTimeout(() => reject(new Error("timeout")), timeoutMs);
+      })
+    ]);
   }
 
   async function loadCurrentTrial() {
@@ -555,12 +565,20 @@
       choice = assignment.baselineSide === "B" ? "baseline" : "candidate";
     }
 
-    const payload = collectTelemetry(choice);
-    await sendLog(payload);
+    el.voteV1.disabled = true;
+    el.voteV2.disabled = true;
+    el.voteNoDiff.disabled = true;
 
-    state.trialIndex += 1;
-    await loadCurrentTrial();
-    state.submittingVote = false;
+    try {
+      const payload = collectTelemetry(choice);
+      await sendLog(payload);
+
+      state.trialIndex += 1;
+      await loadCurrentTrial();
+    } finally {
+      state.submittingVote = false;
+      updateSwitchUI();
+    }
   }
 
   function bindEvents() {
