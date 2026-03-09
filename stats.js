@@ -42,6 +42,16 @@
     return n;
   }
 
+  function bitrateFromProfile(profile) {
+    const p = String(profile || "").toLowerCase();
+    const m = p.match(/(\d+(?:\.\d+)?)\s*m/);
+    if (m) return Number(m[1]);
+    if (p.includes("bad")) return 2;
+    if (p.includes("same")) return 10;
+    if (p.includes("codec")) return 5;
+    return NaN;
+  }
+
   function drawBarPlot(rows) {
     const svg = el.barPlot;
     clearSvg(svg);
@@ -70,7 +80,11 @@
     const svg = el.linePlot;
     clearSvg(svg);
     const points = rows
-      .map((r) => ({ ...r, _bitrate: asNum(r.bitrate_mbps, NaN), _notworse: asNum(r.not_worse_rate, 0) }))
+      .map((r) => ({
+        ...r,
+        _bitrate: Number.isFinite(asNum(r.bitrate_mbps, NaN)) ? asNum(r.bitrate_mbps, NaN) : bitrateFromProfile(r.candidate_profile),
+        _notworse: asNum(r.not_worse_rate, 0)
+      }))
       .filter((r) => Number.isFinite(r._bitrate));
     if (!points.length) return;
 
@@ -87,9 +101,8 @@
     const plotW = w - pad.l - pad.r;
     const plotH = h - pad.t - pad.b;
 
-    const xs = points.map((p) => p._bitrate);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
+    const minX = 2;
+    const maxX = 10;
     const xMap = (x) => pad.l + ((x - minX) / Math.max(0.0001, maxX - minX)) * plotW;
     const yMap = (y) => pad.t + (1 - y) * plotH;
 
@@ -110,8 +123,10 @@
       svg.appendChild(svgEl("text", { x: 860, y: 20 + 14 * ci, fill: c, "font-size": 11 })).appendChild(document.createTextNode(device));
     });
 
-    [minX, maxX].forEach((x) => {
-      svg.appendChild(svgEl("text", { x: xMap(x), y: h - 6, fill: "#374151", "font-size": 11, "text-anchor": "middle" })).appendChild(document.createTextNode(`${x} Mbps`));
+    [2, 4, 5, 6, 8, 10].forEach((x) => {
+      const gx = xMap(x);
+      svg.appendChild(svgEl("line", { x1: gx, y1: pad.t, x2: gx, y2: pad.t + plotH, stroke: "#eef2f7" }));
+      svg.appendChild(svgEl("text", { x: gx, y: h - 6, fill: "#374151", "font-size": 11, "text-anchor": "middle" })).appendChild(document.createTextNode(`${x} Mbps`));
     });
   }
 

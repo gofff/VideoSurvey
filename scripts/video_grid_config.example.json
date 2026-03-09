@@ -1,8 +1,12 @@
 {
   "web_playback": {
     "enabled": true,
-    "pix_fmt": "yuvj420p",
-    "video_tag": "avc1"
+    "pix_fmt": "yuv420p",
+    "video_tag": "avc1",
+    "color_range": "tv",
+    "color_primaries": "bt709",
+    "color_trc": "bt709",
+    "colorspace": "bt709"
   },
   "time_window": {
     "pre_sec": 10,
@@ -23,13 +27,13 @@
   "baseline_profile": {
     "name": "5120_10M",
     "scale": "5120:1440",
-    "fps": "same",
-    "codec": "same",
-    "preset": "same",
-    "video_bitrate": "same",
-    "maxrate": "same",
-    "bufsize": "same",
-    "x264_params": "same",
+    "fps": 20,
+    "codec": "libx264",
+    "preset": "veryfast",
+    "video_bitrate": "10M",
+    "maxrate": "10M",
+    "bufsize": "20M",
+    "x264_params": "keyint=40:min-keyint=40:scenecut=0",
     "faststart": true,
     "include_audio": false
   },
@@ -43,6 +47,32 @@
       "video_bitrate": "same",
       "maxrate": "same",
       "bufsize": "same",
+      "x264_params": "same",
+      "faststart": "same",
+      "include_audio": "same"
+    },
+    {
+      "name": "3840_8M",
+      "scale": "3840:1080",
+      "fps": "same",
+      "codec": "same",
+      "preset": "same",
+      "video_bitrate": "8M",
+      "maxrate": "8M",
+      "bufsize": "16M",
+      "x264_params": "same",
+      "faststart": "same",
+      "include_audio": "same"
+    },
+    {
+      "name": "3840_5M",
+      "scale": "3840:1080",
+      "fps": "same",
+      "codec": "same",
+      "preset": "same",
+      "video_bitrate": "5M",
+      "maxrate": "5M",
+      "bufsize": "10M",
       "x264_params": "same",
       "faststart": "same",
       "include_audio": "same"
@@ -79,9 +109,9 @@
       "fps": "same",
       "codec": "same",
       "preset": "same",
-      "video_bitrate": "1M",
-      "maxrate": "1M",
-      "bufsize": "2M",
+      "video_bitrate": "2M",
+      "maxrate": "2M",
+      "bufsize": "4M",
       "x264_params": "same",
       "faststart": "same",
       "include_audio": "same"

@@ -95,10 +95,44 @@ def _attention_pass_participants(rows: list[dict[str, Any]]) -> set[str]:
 
 
 def _extract_mbps(profile: str) -> float | None:
-    m = re.search(r"(\d+(?:\.\d+)?)\s*m", profile.lower())
+    p = profile.lower()
+    m = re.search(r"(\d+(?:\.\d+)?)\s*m", p)
     if m:
         return float(m.group(1))
+    if "bad" in p:
+        return 2.0
+    if "same" in p:
+        return 10.0
+    if "codec" in p:
+        return 5.0
     return None
+
+
+def _to_float(v: Any) -> float | None:
+    if isinstance(v, (int, float)):
+        return float(v)
+    if isinstance(v, str):
+        s = v.strip().replace(",", ".")
+        if not s:
+            return None
+        try:
+            return float(s)
+        except ValueError:
+            return None
+    return None
+
+
+def _dedupe_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    unique: dict[tuple[str, str], dict[str, Any]] = {}
+    passthrough: list[dict[str, Any]] = []
+    for r in rows:
+        pid = r.get("participant_id")
+        trial_id = r.get("trial_id")
+        if isinstance(pid, str) and isinstance(trial_id, str) and trial_id:
+            unique[(pid, trial_id)] = r
+        else:
+            passthrough.append(r)
+    return passthrough + list(unique.values())
 
 
 def _conversion_stats() -> dict[str, dict[str, float]]:
@@ -145,7 +179,7 @@ def get_stats(
     attention_fail_weight: float = 0.35,
     max_events: int = 200,
 ):
-    rows = _load_logs()
+    rows = _dedupe_rows(_load_logs())
     checks_by_participant = _attention_checks_by_participant(rows)
     passed = _attention_pass_participants(rows)
     all_participants = sorted(
@@ -180,6 +214,8 @@ def get_stats(
             "size_mb_n": 0.0,
             "encode_sec_sum": 0.0,
             "encode_sec_n": 0.0,
+            "bitrate_sum": 0.0,
+            "bitrate_n": 0.0,
         }
     )
 
@@ -210,6 +246,10 @@ def get_stats(
         if isinstance(encode_sec, (int, float)):
             grouped[key]["encode_sec_sum"] += float(encode_sec)
             grouped[key]["encode_sec_n"] += 1.0
+        bitrate_mbps = _to_float(r.get("candidate_bitrate_mbps"))
+        if bitrate_mbps is not None and bitrate_mbps > 0:
+            grouped[key]["bitrate_sum"] += bitrate_mbps
+            grouped[key]["bitrate_n"] += 1.0
 
     conv = _conversion_stats()
     summary_rows: list[dict[str, Any]] = []
@@ -222,6 +262,11 @@ def get_stats(
         baseline_rate = s["baseline_w"] / n_weighted
         candidate_rate = s["candidate_w"] / n_weighted
         not_worse_rate = (s["nodiff_w"] + s["candidate_w"]) / n_weighted
+        bitrate_mbps = (
+            (s["bitrate_sum"] / s["bitrate_n"])
+            if s["bitrate_n"] > 0
+            else _extract_mbps(profile)
+        )
         cstats = conv.get(profile, {})
         avg_size_mb = cstats.get("avg_size_mb")
         if avg_size_mb is None and s["size_mb_n"] > 0:
@@ -233,7 +278,7 @@ def get_stats(
             {
                 "candidate_profile": profile,
                 "device_class": device,
-                "bitrate_mbps": _extract_mbps(profile),
+                "bitrate_mbps": bitrate_mbps,
                 "n_trials_raw": n_raw,
                 "n_trials_weighted": n_weighted,
                 "not_worse_rate": not_worse_rate,

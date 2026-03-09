@@ -15,7 +15,8 @@
     playing: false,
     hasUserInteraction: false,
     currentAssignment: null,
-    pseudoFullscreen: false
+    pseudoFullscreen: false,
+    submittingVote: false
   };
 
   const el = {
@@ -270,6 +271,89 @@
     });
   }
 
+  async function seekVideo(video, timeSec, timeoutMs = 1000) {
+    const target = clampTime(timeSec, video);
+    if (!Number.isFinite(target)) return;
+    await new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        video.removeEventListener("seeked", onSeeked);
+        resolve();
+      };
+      const onSeeked = () => finish();
+      const timer = window.setTimeout(finish, timeoutMs);
+      try {
+        video.currentTime = target;
+      } catch (_) {
+        window.clearTimeout(timer);
+        finish();
+        return;
+      }
+      video.addEventListener("seeked", () => {
+        window.clearTimeout(timer);
+        onSeeked();
+      }, { once: true });
+    });
+  }
+
+  async function loadTrialMedia(srcA, srcB, timeoutMs = 5000) {
+    el.videoA.removeAttribute("src");
+    el.videoB.removeAttribute("src");
+    el.videoA.load();
+    el.videoB.load();
+
+    await new Promise((resolve, reject) => {
+      let settled = false;
+      let loadedA = false;
+      let loadedB = false;
+      const timer = window.setTimeout(() => {
+        if (!(loadedA && loadedB)) fail("timeout");
+      }, timeoutMs);
+
+      const cleanup = () => {
+        window.clearTimeout(timer);
+        el.videoA.removeEventListener("loadedmetadata", onLoadedA);
+        el.videoB.removeEventListener("loadedmetadata", onLoadedB);
+        el.videoA.removeEventListener("error", onErrorA);
+        el.videoB.removeEventListener("error", onErrorB);
+      };
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve();
+      };
+      const fail = (which) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error(`failed_to_load_${which}`));
+      };
+      const onLoadedA = () => {
+        loadedA = true;
+        if (loadedA && loadedB) done();
+      };
+      const onLoadedB = () => {
+        loadedB = true;
+        if (loadedA && loadedB) done();
+      };
+      const onErrorA = () => fail("A");
+      const onErrorB = () => fail("B");
+
+      el.videoA.addEventListener("loadedmetadata", onLoadedA, { once: true });
+      el.videoB.addEventListener("loadedmetadata", onLoadedB, { once: true });
+      el.videoA.addEventListener("error", onErrorA, { once: true });
+      el.videoB.addEventListener("error", onErrorB, { once: true });
+
+      el.videoA.src = srcA;
+      el.videoB.src = srcB;
+      el.videoA.load();
+      el.videoB.load();
+    });
+  }
+
   async function switchVersion(targetVersion, isManual) {
     if (state.activeVersion === targetVersion) return;
 
@@ -278,7 +362,7 @@
     const t = clampTime(from.currentTime, to);
 
     from.pause();
-    setPlaybackTime(to, t);
+    await seekVideo(to, t);
     await waitForVideoReady(to);
 
     state.activeVersion = targetVersion;
@@ -314,6 +398,7 @@
       candidate_profile: trial.candidate_profile,
       trial_type: trial.trial_type,
       expected_choice: trialExpectedChoice(trial.trial_type),
+      candidate_bitrate_mbps: trial.candidate_bitrate_mbps ?? null,
       candidate_size_mb: trial.candidate_size_mb ?? null,
       candidate_encode_sec: trial.candidate_encode_sec ?? null,
       baseline_size_mb: trial.baseline_size_mb ?? null,
@@ -417,48 +502,49 @@
   }
 
   async function loadCurrentTrial() {
-    const trial = state.queue[state.trialIndex];
-    if (!trial) {
+    while (true) {
+      const trial = state.queue[state.trialIndex];
+      if (!trial) {
+        pauseAll();
+        el.trialSection.classList.add("hidden");
+        el.doneSection.classList.remove("hidden");
+        return;
+      }
+
+      const assignment = randomizeAssignment(trial);
+      state.currentAssignment = assignment;
+      state.manualSwitchCount = 0;
+      state.activeVersion = "A";
+      state.trialStartedAt = Date.now();
+      state.playing = false;
+
+      updateProgressUI();
+      updateSwitchUI();
+      updateActiveVersionUI();
+      updatePlayStateUI();
+
       pauseAll();
-      el.trialSection.classList.add("hidden");
-      el.doneSection.classList.remove("hidden");
+      try {
+        await loadTrialMedia(assignment.srcA, assignment.srcB);
+      } catch (err) {
+        console.error("Skipping broken trial media", assignment, err);
+        state.trialIndex += 1;
+        continue;
+      }
+
+      showActiveVideo();
+      if (state.hasUserInteraction) {
+        await safePlay(activeVideoEl());
+      }
       return;
     }
-
-    const assignment = randomizeAssignment(trial);
-    state.currentAssignment = assignment;
-    state.manualSwitchCount = 0;
-    state.activeVersion = "A";
-    state.trialStartedAt = Date.now();
-    state.playing = false;
-
-    updateProgressUI();
-    updateSwitchUI();
-    updateActiveVersionUI();
-    updatePlayStateUI();
-
-    pauseAll();
-    el.videoA.removeAttribute("src");
-    el.videoB.removeAttribute("src");
-    el.videoA.load();
-    el.videoB.load();
-
-    el.videoA.src = assignment.srcA;
-    el.videoB.src = assignment.srcB;
-    el.videoA.load();
-    el.videoB.load();
-
-    showActiveVideo();
-
-    if (state.hasUserInteraction) {
-      await safePlay(activeVideoEl());
-    }
-
   }
 
   async function submitVote(voteFor) {
+    if (state.submittingVote) return;
     const assignment = state.currentAssignment;
     if (!assignment) return;
+    state.submittingVote = true;
 
     let choice;
     if (voteFor === "nodiff") {
@@ -474,6 +560,7 @@
 
     state.trialIndex += 1;
     await loadCurrentTrial();
+    state.submittingVote = false;
   }
 
   function bindEvents() {

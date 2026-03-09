@@ -12,6 +12,19 @@ from typing import Any
 
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".m4v"}
+DEFAULT_BASELINE_PROFILE = {
+    "name": "5120_10M",
+    "scale": "5120:1440",
+    "fps": 20,
+    "codec": "libx264",
+    "preset": "veryfast",
+    "video_bitrate": "10M",
+    "maxrate": "10M",
+    "bufsize": "20M",
+    "x264_params": "keyint=40:min-keyint=40:scenecut=0",
+    "faststart": True,
+    "include_audio": False,
+}
 
 
 def slugify(value: str) -> str:
@@ -125,6 +138,19 @@ def file_stats(path: Path) -> tuple[int | None, float | None]:
     return (size_bytes, size_mb)
 
 
+def bitrate_to_mbps(value: Any) -> float | None:
+    if value is None:
+        return None
+    s = str(value).strip().lower()
+    m = re.match(r"^(\d+(?:\.\d+)?)\s*m$", s)
+    if m:
+        return float(m.group(1))
+    k = re.match(r"^(\d+(?:\.\d+)?)\s*k$", s)
+    if k:
+        return float(k.group(1)) / 1000.0
+    return None
+
+
 def build_time_window(config: dict[str, Any], center_hhmmss: str) -> tuple[float, float]:
     tw = config.get("time_window", {})
     if not isinstance(tw, dict):
@@ -160,42 +186,22 @@ def resolve_profile_with_same(
     return merged
 
 
-def ffmpeg_cut_baseline(
-    ffmpeg_bin: str,
-    src: Path,
-    dst: Path,
-    start_sec: float,
-    duration_sec: float,
-    faststart: bool,
-    wp_opts: dict[str, Any],
-    overwrite: bool,
-    dry_run: bool,
-) -> float:
-    cmd = [
-        ffmpeg_bin,
-        "-y" if overwrite else "-n",
-        "-ss",
-        f"{start_sec:.3f}",
-        "-t",
-        f"{duration_sec:.3f}",
-        "-i",
-        str(src),
-        "-fflags",
-        "+genpts",
-        "-avoid_negative_ts",
-        "make_zero",
-        "-map",
-        "0:v:0",
-        "-c",
-        "copy",
-    ]
-    if faststart:
-        cmd += ["-movflags", "+faststart"]
-    cmd.append(str(dst))
-    return run_ffmpeg(cmd, dry_run=dry_run)
+def normalize_profile_with_defaults(
+    profile: dict[str, Any], defaults: dict[str, Any]
+) -> dict[str, Any]:
+    normalized = dict(defaults)
+    for key, value in profile.items():
+        if key == "name":
+            normalized[key] = value
+            continue
+        if isinstance(value, str) and value.strip().lower() == "same":
+            normalized[key] = defaults.get(key)
+        else:
+            normalized[key] = value
+    return normalized
 
 
-def ffmpeg_encode_candidate(
+def ffmpeg_encode_with_profile(
     ffmpeg_bin: str,
     src: Path,
     dst: Path,
@@ -206,25 +212,19 @@ def ffmpeg_encode_candidate(
     overwrite: bool,
     dry_run: bool,
 ) -> float:
-    def same_as_default(value: Any, default: Any) -> Any:
-        if isinstance(value, str) and value.strip().lower() == "same":
-            return default
-        return value if value is not None else default
-
-    scale = same_as_default(profile.get("scale"), "3840:1080")
-    fps_raw = same_as_default(profile.get("fps"), 20)
-    fps = int(fps_raw)
-    scaler = same_as_default(profile.get("scaler"), "bicubic")
-    codec = same_as_default(profile.get("codec"), "libx264")
-    preset = same_as_default(profile.get("preset"), None)
-    bitrate = same_as_default(profile.get("video_bitrate"), None)
-    maxrate = same_as_default(profile.get("maxrate"), None)
-    bufsize = same_as_default(profile.get("bufsize"), None)
-    x264_params = same_as_default(profile.get("x264_params"), None)
-    crf = same_as_default(profile.get("crf"), None)
-    extra_args = same_as_default(profile.get("extra_args"), [])
-    faststart_raw = same_as_default(profile.get("faststart"), True)
-    faststart = bool(faststart_raw)
+    scale = profile.get("scale", "3840:1080")
+    fps_raw = profile.get("fps", 20)
+    fps = int(fps_raw) if not (isinstance(fps_raw, str) and fps_raw.lower() == "same") else 20
+    scaler = profile.get("scaler", "bicubic")
+    codec = profile.get("codec", "libx264")
+    preset = profile.get("preset")
+    bitrate = profile.get("video_bitrate")
+    maxrate = profile.get("maxrate")
+    bufsize = profile.get("bufsize")
+    x264_params = profile.get("x264_params")
+    crf = profile.get("crf")
+    extra_args = profile.get("extra_args", [])
+    faststart = bool(profile.get("faststart", True))
 
     if extra_args and not isinstance(extra_args, list):
         raise ValueError("profile.extra_args must be a list")
@@ -247,7 +247,7 @@ def ffmpeg_encode_candidate(
         "-r",
         str(fps),
         "-c:v",
-        codec,
+        str(codec),
     ]
 
     if preset:
@@ -258,27 +258,37 @@ def ffmpeg_encode_candidate(
         cmd += ["-maxrate", str(maxrate)]
     if bufsize:
         cmd += ["-bufsize", str(bufsize)]
-    if x264_params and codec == "libx264":
+    if x264_params and str(codec) == "libx264":
         cmd += ["-x264-params", str(x264_params)]
     if crf is not None:
         cmd += ["-crf", str(crf)]
     if extra_args:
         cmd += [str(x) for x in extra_args]
 
-    # Survey playback is always silent for all generated outputs.
     cmd += ["-an"]
 
     if bool(wp_opts.get("enabled", True)):
         pix_fmt = wp_opts.get("pix_fmt", "yuv420p")
         video_tag = wp_opts.get("video_tag", "avc1")
+        color_range = wp_opts.get("color_range", "tv")
+        color_primaries = wp_opts.get("color_primaries", "bt709")
+        color_trc = wp_opts.get("color_trc", "bt709")
+        colorspace = wp_opts.get("colorspace", "bt709")
         if pix_fmt:
             cmd += ["-pix_fmt", str(pix_fmt)]
         if video_tag:
             cmd += ["-tag:v", str(video_tag)]
+        if color_range:
+            cmd += ["-color_range", str(color_range)]
+        if color_primaries:
+            cmd += ["-color_primaries", str(color_primaries)]
+        if color_trc:
+            cmd += ["-color_trc", str(color_trc)]
+        if colorspace:
+            cmd += ["-colorspace", str(colorspace)]
 
     if faststart:
         cmd += ["-movflags", "+faststart"]
-
     cmd.append(str(dst))
     return run_ffmpeg(cmd, dry_run=dry_run)
 
@@ -287,6 +297,7 @@ def append_trials_to_config(
     survey_config_path: Path,
     generated_trials: list[dict[str, Any]],
     generated_videos: list[dict[str, str]],
+    generated_clip_ids: set[str],
     dry_run: bool,
 ) -> None:
     survey_cfg = load_json(survey_config_path)
@@ -296,8 +307,13 @@ def append_trials_to_config(
 
     trial_by_id: dict[str, dict[str, Any]] = {}
     for t in existing_trials:
-        if isinstance(t, dict) and isinstance(t.get("id"), str):
-            trial_by_id[t["id"]] = t
+        if not isinstance(t, dict) or not isinstance(t.get("id"), str):
+            continue
+        clip_id = t.get("clip_id")
+        if isinstance(clip_id, str) and clip_id in generated_clip_ids:
+            # Drop stale generated rows for clips we are rebuilding now.
+            continue
+        trial_by_id[t["id"]] = t
 
     for t in generated_trials:
         trial_by_id[t["id"]] = t
@@ -410,21 +426,11 @@ def main() -> None:
     if not isinstance(sources_raw, list) or not sources_raw:
         raise ValueError("grid config must include non-empty sources list")
 
-    baseline_profile = cfg.get(
-        "baseline_profile",
-        {
-            "name": "5120_10M",
-            "scale": "5120:1440",
-            "fps": 20,
-            "codec": "libx264",
-            "preset": "veryfast",
-            "video_bitrate": "10M",
-            "maxrate": "10M",
-            "bufsize": "20M",
-            "x264_params": "keyint=40:min-keyint=40:scenecut=0",
-            "faststart": True,
-            "include_audio": False,
-        },
+    baseline_profile_raw = cfg.get("baseline_profile", {})
+    if not isinstance(baseline_profile_raw, dict):
+        raise ValueError("baseline_profile must be an object")
+    baseline_profile = normalize_profile_with_defaults(
+        baseline_profile_raw, DEFAULT_BASELINE_PROFILE
     )
     candidate_profiles = cfg.get("candidate_profiles", [])
     if not isinstance(candidate_profiles, list) or not candidate_profiles:
@@ -439,6 +445,7 @@ def main() -> None:
     generated_trials: list[dict[str, Any]] = []
     generated_videos: list[dict[str, str]] = []
     report_entries: list[dict[str, Any]] = []
+    generated_clip_ids: set[str] = set()
 
     for item in sources_raw:
         src_item = validate_source_item(item)
@@ -449,18 +456,19 @@ def main() -> None:
             raise ValueError(f"Unsupported source extension: {src_path}")
 
         clip_id = src_item["clip_id"]
+        generated_clip_ids.add(clip_id)
         start_sec, duration_sec = build_time_window(cfg, src_item["center"])
 
         baseline_out_name = f"{clip_id}_{baseline_name}.mp4"
         baseline_out_path = videos_dir / baseline_out_name
 
-        _baseline_elapsed = ffmpeg_cut_baseline(
+        _baseline_elapsed = ffmpeg_encode_with_profile(
             ffmpeg_bin=args.ffmpeg_bin,
             src=src_path,
             dst=baseline_out_path,
             start_sec=start_sec,
             duration_sec=duration_sec,
-            faststart=baseline_faststart,
+            profile=baseline_profile,
             wp_opts=wp_opts,
             overwrite=args.overwrite,
             dry_run=args.dry_run,
@@ -496,7 +504,7 @@ def main() -> None:
             candidate_out_name = f"{clip_id}_{profile_name}.mp4"
             candidate_out_path = videos_dir / candidate_out_name
 
-            elapsed = ffmpeg_encode_candidate(
+            elapsed = ffmpeg_encode_with_profile(
                 ffmpeg_bin=args.ffmpeg_bin,
                 src=src_path,
                 dst=candidate_out_path,
@@ -535,6 +543,7 @@ def main() -> None:
                     "baseline": f"videos/{baseline_out_name}",
                     "candidate": f"videos/{candidate_out_name}",
                     "candidate_profile": profile_name,
+                    "candidate_bitrate_mbps": bitrate_to_mbps(candidate_profile.get("video_bitrate")),
                     "baseline_size_mb": round(base_size_mb, 6) if base_size_mb is not None else None,
                     "candidate_size_mb": round(cand_size_mb, 6) if cand_size_mb is not None else None,
                     "candidate_encode_sec": round(elapsed, 6),
@@ -546,6 +555,7 @@ def main() -> None:
             survey_config_path=survey_config_path,
             generated_trials=generated_trials,
             generated_videos=generated_videos,
+            generated_clip_ids=generated_clip_ids,
             dry_run=args.dry_run,
         )
 

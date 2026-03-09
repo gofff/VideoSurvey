@@ -13,9 +13,21 @@
       "baseline": "videos/wide1_5120_10M.mp4",
       "candidate": "videos/wide1_3840_4M.mp4",
       "candidate_profile": "3840_4M",
-      "baseline_size_mb": 24.439678,
-      "candidate_size_mb": 8.738702,
-      "candidate_encode_sec": 7.32669
+      "candidate_bitrate_mbps": 4.0,
+      "baseline_size_mb": 24.487943,
+      "candidate_size_mb": 9.539132,
+      "candidate_encode_sec": 4.362061
+    },
+    {
+      "id": "wide1_3840_5M",
+      "clip_id": "wide1",
+      "baseline": "videos/wide1_5120_10M.mp4",
+      "candidate": "videos/wide1_3840_5M.mp4",
+      "candidate_profile": "3840_5M",
+      "candidate_bitrate_mbps": 5.0,
+      "baseline_size_mb": 24.487943,
+      "candidate_size_mb": 12.060921,
+      "candidate_encode_sec": 4.355451
     },
     {
       "id": "wide1_3840_6M",
@@ -23,9 +35,21 @@
       "baseline": "videos/wide1_5120_10M.mp4",
       "candidate": "videos/wide1_3840_6M.mp4",
       "candidate_profile": "3840_6M",
-      "baseline_size_mb": 24.439678,
-      "candidate_size_mb": 13.213199,
-      "candidate_encode_sec": 7.825543
+      "candidate_bitrate_mbps": 6.0,
+      "baseline_size_mb": 24.487943,
+      "candidate_size_mb": 14.579078,
+      "candidate_encode_sec": 4.377252
+    },
+    {
+      "id": "wide1_3840_8M",
+      "clip_id": "wide1",
+      "baseline": "videos/wide1_5120_10M.mp4",
+      "candidate": "videos/wide1_3840_8M.mp4",
+      "candidate_profile": "3840_8M",
+      "candidate_bitrate_mbps": 8.0,
+      "baseline_size_mb": 24.487943,
+      "candidate_size_mb": 19.683438,
+      "candidate_encode_sec": 4.621775
     },
     {
       "id": "wide1_3840_BAD",
@@ -33,9 +57,10 @@
       "baseline": "videos/wide1_5120_10M.mp4",
       "candidate": "videos/wide1_3840_BAD.mp4",
       "candidate_profile": "3840_BAD",
-      "baseline_size_mb": 24.439678,
-      "candidate_size_mb": 2.025808,
-      "candidate_encode_sec": 6.099241
+      "candidate_bitrate_mbps": 2.0,
+      "baseline_size_mb": 24.487943,
+      "candidate_size_mb": 4.580319,
+      "candidate_encode_sec": 4.20102
     },
     {
       "id": "wide1_3840_CODEC",
@@ -43,9 +68,10 @@
       "baseline": "videos/wide1_5120_10M.mp4",
       "candidate": "videos/wide1_3840_CODEC.mp4",
       "candidate_profile": "3840_CODEC",
-      "baseline_size_mb": 24.439678,
-      "candidate_size_mb": 12.352143,
-      "candidate_encode_sec": 17.125908
+      "candidate_bitrate_mbps": 5.0,
+      "baseline_size_mb": 24.487943,
+      "candidate_size_mb": 12.357198,
+      "candidate_encode_sec": 16.971917
     },
     {
       "id": "wide1_3840_SAME",
@@ -53,30 +79,10 @@
       "baseline": "videos/wide1_5120_10M.mp4",
       "candidate": "videos/wide1_3840_SAME.mp4",
       "candidate_profile": "3840_SAME",
-      "baseline_size_mb": 24.439678,
-      "candidate_size_mb": 36.255848,
-      "candidate_encode_sec": 9.423998
-    },
-    {
-      "id": "wide1_5M",
-      "clip_id": "wide1",
-      "baseline": "videos/wide1_5120_10M.mp4",
-      "candidate": "videos/wide1_3840_5M.mp4",
-      "candidate_profile": "3840_5M"
-    },
-    {
-      "id": "wide1_6M",
-      "clip_id": "wide1",
-      "baseline": "videos/wide1_5120_10M.mp4",
-      "candidate": "videos/wide1_3840_6M.mp4",
-      "candidate_profile": "3840_6M"
-    },
-    {
-      "id": "wide1_8M",
-      "clip_id": "wide1",
-      "baseline": "videos/wide1_5120_10M.mp4",
-      "candidate": "videos/wide1_3840_8M.mp4",
-      "candidate_profile": "3840_8M"
+      "candidate_bitrate_mbps": 10.0,
+      "baseline_size_mb": 24.487943,
+      "candidate_size_mb": 24.518521,
+      "candidate_encode_sec": 4.773968
     },
     {
       "id": "wide2_3840_4M",
@@ -84,9 +90,21 @@
       "baseline": "videos/wide2_5120_10M.mp4",
       "candidate": "videos/wide2_3840_4M.mp4",
       "candidate_profile": "3840_4M",
-      "baseline_size_mb": 17.54196,
-      "candidate_size_mb": 8.592753,
-      "candidate_encode_sec": 6.800339
+      "candidate_bitrate_mbps": 4.0,
+      "baseline_size_mb": 23.323698,
+      "candidate_size_mb": 9.164035,
+      "candidate_encode_sec": 4.100411
+    },
+    {
+      "id": "wide2_3840_5M",
+      "clip_id": "wide2",
+      "baseline": "videos/wide2_5120_10M.mp4",
+      "candidate": "videos/wide2_3840_5M.mp4",
+      "candidate_profile": "3840_5M",
+      "candidate_bitrate_mbps": 5.0,
+      "baseline_size_mb": 23.323698,
+      "candidate_size_mb": 11.481894,
+      "candidate_encode_sec": 4.058269
     },
     {
       "id": "wide2_3840_6M",
@@ -94,9 +112,21 @@
       "baseline": "videos/wide2_5120_10M.mp4",
       "candidate": "videos/wide2_3840_6M.mp4",
       "candidate_profile": "3840_6M",
-      "baseline_size_mb": 17.54196,
-      "candidate_size_mb": 13.189701,
-      "candidate_encode_sec": 7.270339
+      "candidate_bitrate_mbps": 6.0,
+      "baseline_size_mb": 23.323698,
+      "candidate_size_mb": 13.918869,
+      "candidate_encode_sec": 4.26703
+    },
+    {
+      "id": "wide2_3840_8M",
+      "clip_id": "wide2",
+      "baseline": "videos/wide2_5120_10M.mp4",
+      "candidate": "videos/wide2_3840_8M.mp4",
+      "candidate_profile": "3840_8M",
+      "candidate_bitrate_mbps": 8.0,
+      "baseline_size_mb": 23.323698,
+      "candidate_size_mb": 18.700591,
+      "candidate_encode_sec": 4.194112
     },
     {
       "id": "wide2_3840_BAD",
@@ -104,9 +134,10 @@
       "baseline": "videos/wide2_5120_10M.mp4",
       "candidate": "videos/wide2_3840_BAD.mp4",
       "candidate_profile": "3840_BAD",
-      "baseline_size_mb": 17.54196,
-      "candidate_size_mb": 2.008135,
-      "candidate_encode_sec": 5.51824
+      "candidate_bitrate_mbps": 2.0,
+      "baseline_size_mb": 23.323698,
+      "candidate_size_mb": 4.429988,
+      "candidate_encode_sec": 3.979445
     },
     {
       "id": "wide2_3840_CODEC",
@@ -114,9 +145,10 @@
       "baseline": "videos/wide2_5120_10M.mp4",
       "candidate": "videos/wide2_3840_CODEC.mp4",
       "candidate_profile": "3840_CODEC",
-      "baseline_size_mb": 17.54196,
-      "candidate_size_mb": 12.054396,
-      "candidate_encode_sec": 13.666861
+      "candidate_bitrate_mbps": 5.0,
+      "baseline_size_mb": 23.323698,
+      "candidate_size_mb": 12.047634,
+      "candidate_encode_sec": 14.523865
     },
     {
       "id": "wide2_3840_SAME",
@@ -124,9 +156,10 @@
       "baseline": "videos/wide2_5120_10M.mp4",
       "candidate": "videos/wide2_3840_SAME.mp4",
       "candidate_profile": "3840_SAME",
-      "baseline_size_mb": 17.54196,
-      "candidate_size_mb": 17.969493,
-      "candidate_encode_sec": 7.647216
+      "candidate_bitrate_mbps": 10.0,
+      "baseline_size_mb": 23.323698,
+      "candidate_size_mb": 23.456839,
+      "candidate_encode_sec": 4.27242
     }
   ],
   "attention_checks": [
@@ -141,9 +174,9 @@
     {
       "id": "attention_same_same_auto",
       "type": "same_same",
-      "clip_id": "wide2",
-      "baseline": "videos/wide2_3840_CODEC.mp4",
-      "candidate": "videos/wide2_3840_CODEC.mp4",
+      "clip_id": "wide1",
+      "baseline": "videos/wide1_3840_6M.mp4",
+      "candidate": "videos/wide1_3840_6M.mp4",
       "candidate_profile": "attention_same_same"
     }
   ]

@@ -53,6 +53,7 @@ function statsResponse_(e) {
   var maxEvents = Math.max(1, Math.min(500, isFinite(maxEventsRaw) ? maxEventsRaw : 200));
 
   var rows = loadLogPayloads_();
+  rows = dedupeRows_(rows);
 
   var checksByPid = {};
   rows.forEach(function (r) {
@@ -122,7 +123,9 @@ function statsResponse_(e) {
         size_mb_sum: 0,
         size_mb_n: 0,
         encode_sec_sum: 0,
-        encode_sec_n: 0
+        encode_sec_n: 0,
+        bitrate_sum: 0,
+        bitrate_n: 0
       };
     }
     var w = (weightByPid[pid] != null) ? weightByPid[pid] : 1;
@@ -141,6 +144,11 @@ function statsResponse_(e) {
       grouped[key].encode_sec_sum += encSec;
       grouped[key].encode_sec_n += 1;
     }
+    var rowBitrate = parseOptNumber_(r.candidate_bitrate_mbps);
+    if (rowBitrate !== null && rowBitrate > 0) {
+      grouped[key].bitrate_sum += rowBitrate;
+      grouped[key].bitrate_n += 1;
+    }
   });
 
   var summary = Object.keys(grouped).sort().map(function (k) {
@@ -149,7 +157,7 @@ function statsResponse_(e) {
     return {
       candidate_profile: g.candidate_profile,
       device_class: g.device_class,
-      bitrate_mbps: g.bitrate_mbps,
+      bitrate_mbps: g.bitrate_n > 0 ? (g.bitrate_sum / g.bitrate_n) : g.bitrate_mbps,
       n_trials_raw: g.n_trials_raw,
       n_trials_weighted: g.n_trials_weighted,
       not_worse_rate: (g.nodiff_w + g.candidate_w) / nw,
@@ -236,10 +244,30 @@ function expectedChoice_(trialType) {
 
 function extractMbps_(profile) {
   if (!profile) return null;
-  var m = String(profile).toLowerCase().match(/(\d+(?:\.\d+)?)\s*m/);
+  var p = String(profile).toLowerCase();
+  var m = p.match(/(\d+(?:\.\d+)?)\s*m/);
+  if (p.indexOf("bad") >= 0) return 2;
+  if (p.indexOf("same") >= 0) return 10;
+  if (p.indexOf("codec") >= 0) return 5;
   if (!m) return null;
   var v = Number(m[1]);
-  return isFinite(v) ? v : null;
+  if (isFinite(v)) return v;
+  return null;
+}
+
+function dedupeRows_(rows) {
+  var unique = {};
+  var pass = [];
+  rows.forEach(function (r) {
+    var pid = asString_(r.participant_id);
+    var trialId = asString_(r.trial_id);
+    if (pid && trialId) {
+      unique[pid + "||" + trialId] = r;
+    } else {
+      pass.push(r);
+    }
+  });
+  return pass.concat(Object.keys(unique).map(function (k) { return unique[k]; }));
 }
 
 function asString_(v) {
