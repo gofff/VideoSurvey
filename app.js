@@ -3,6 +3,8 @@
 
   const MIN_MANUAL_SWITCHES = 2;
   const PARTICIPANT_KEY = "participant_id";
+  const MIN_SUBMIT_FEEDBACK_MS = 700;
+  const NEXT_TRIAL_TIMEOUT_MS = 8000;
 
   const state = {
     participantId: null,
@@ -26,11 +28,14 @@
     startBtn: document.getElementById("startBtn"),
     progressText: document.getElementById("progressText"),
     switchText: document.getElementById("switchText"),
+    submitStatus: document.getElementById("submitStatus"),
     currentVersionText: document.getElementById("currentVersionText"),
     playState: document.getElementById("playState"),
     fullscreenBtn: document.getElementById("fullscreenBtn"),
     pauseBtn: document.getElementById("pauseBtn"),
     videoViewport: document.getElementById("videoViewport"),
+    loadingOverlay: document.getElementById("loadingOverlay"),
+    loadingText: document.getElementById("loadingText"),
     videoA: document.getElementById("videoA"),
     videoB: document.getElementById("videoB"),
     switchToV1: document.getElementById("switchToV1"),
@@ -145,9 +150,10 @@
   function updateSwitchUI() {
     el.switchText.textContent = `Manual switches: ${state.manualSwitchCount} / ${MIN_MANUAL_SWITCHES}`;
     const canVote = state.manualSwitchCount >= MIN_MANUAL_SWITCHES;
-    el.voteV1.disabled = !canVote;
-    el.voteV2.disabled = !canVote;
-    el.voteNoDiff.disabled = !canVote;
+    const lock = state.submittingVote;
+    el.voteV1.disabled = lock || !canVote;
+    el.voteV2.disabled = lock || !canVote;
+    el.voteNoDiff.disabled = lock || !canVote;
   }
 
   function updateProgressUI() {
@@ -385,6 +391,15 @@
     return null;
   }
 
+  function collectErrorTelemetry(reason, detail) {
+    if (!state.currentAssignment) return null;
+    const payload = collectTelemetry("error_skipped");
+    payload.trial_outcome = "skipped_error";
+    payload.error_reason = reason || "unknown";
+    payload.error_detail = detail ? String(detail) : "";
+    return payload;
+  }
+
   function collectTelemetry(choice) {
     const assignment = state.currentAssignment;
     const trial = assignment.trial;
@@ -426,6 +441,16 @@
     const endpoints = resolveLogEndpoints(state.config || {});
     if (!endpoints.length) return;
     await Promise.allSettled(endpoints.map((endpoint) => postLog(endpoint, payload)));
+  }
+
+  async function logTrialSkip(reason, detail) {
+    try {
+      const payload = collectErrorTelemetry(reason, detail);
+      if (!payload) return;
+      await sendLog(payload);
+    } catch (_) {
+      // Best effort logging for skipped trials.
+    }
   }
 
   async function postLog(endpoint, payload) {
@@ -511,11 +536,45 @@
     ]);
   }
 
+  function sleep(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
+  function setSubmittingState(isBusy, text = "") {
+    state.submittingVote = isBusy;
+    el.trialSection.classList.toggle("trial-busy", isBusy);
+    el.switchToV1.disabled = isBusy;
+    el.switchToV2.disabled = isBusy;
+    el.pauseBtn.disabled = isBusy;
+    el.fullscreenBtn.disabled = isBusy;
+    if (el.loadingOverlay) {
+      if (isBusy) {
+        if (el.loadingText && text) el.loadingText.textContent = text;
+        el.loadingOverlay.classList.remove("hidden");
+        el.loadingOverlay.setAttribute("aria-hidden", "false");
+      } else {
+        el.loadingOverlay.classList.add("hidden");
+        el.loadingOverlay.setAttribute("aria-hidden", "true");
+      }
+    }
+    if (el.submitStatus) {
+      if (isBusy && text) {
+        el.submitStatus.textContent = text;
+        el.submitStatus.classList.remove("hidden");
+      } else {
+        el.submitStatus.textContent = "";
+        el.submitStatus.classList.add("hidden");
+      }
+    }
+    updateSwitchUI();
+  }
+
   async function loadCurrentTrial() {
     while (true) {
       const trial = state.queue[state.trialIndex];
       if (!trial) {
         pauseAll();
+        setSubmittingState(false);
         el.trialSection.classList.add("hidden");
         el.doneSection.classList.remove("hidden");
         return;
@@ -538,6 +597,7 @@
         await loadTrialMedia(assignment.srcA, assignment.srcB);
       } catch (err) {
         console.error("Skipping broken trial media", assignment, err);
+        await logTrialSkip("media_load_failed", err?.message || "load_error");
         state.trialIndex += 1;
         continue;
       }
@@ -546,7 +606,28 @@
       if (state.hasUserInteraction) {
         await safePlay(activeVideoEl());
       }
+      setSubmittingState(false);
       return;
+    }
+  }
+
+  async function loadNextTrialWithRecovery() {
+    try {
+      await withTimeout(loadCurrentTrial(), NEXT_TRIAL_TIMEOUT_MS);
+      return;
+    } catch (err) {
+      console.error("Next trial transition failed, skipping one trial", err);
+      await logTrialSkip("next_trial_transition_failed", err?.message || "transition_error");
+      state.trialIndex += 1;
+    }
+    try {
+      await loadCurrentTrial();
+    } catch (err2) {
+      console.error("Recovery load failed", err2);
+      pauseAll();
+      setSubmittingState(false);
+      el.trialSection.classList.add("hidden");
+      el.doneSection.classList.remove("hidden");
     }
   }
 
@@ -554,7 +635,6 @@
     if (state.submittingVote) return;
     const assignment = state.currentAssignment;
     if (!assignment) return;
-    state.submittingVote = true;
 
     let choice;
     if (voteFor === "nodiff") {
@@ -565,19 +645,26 @@
       choice = assignment.baselineSide === "B" ? "baseline" : "candidate";
     }
 
-    el.voteV1.disabled = true;
-    el.voteV2.disabled = true;
-    el.voteNoDiff.disabled = true;
+    setSubmittingState(true, "Answer accepted. Loading next trial...");
 
     try {
       const payload = collectTelemetry(choice);
-      await sendLog(payload);
+      await Promise.all([
+        sendLog(payload),
+        sleep(MIN_SUBMIT_FEEDBACK_MS)
+      ]);
 
       state.trialIndex += 1;
-      await loadCurrentTrial();
+      await loadNextTrialWithRecovery();
+    } catch (err) {
+      console.error(err);
+      await logTrialSkip("submit_failed", err?.message || "submit_error");
+      state.trialIndex += 1;
+      await loadNextTrialWithRecovery();
     } finally {
-      state.submittingVote = false;
-      updateSwitchUI();
+      if (!state.currentAssignment) {
+        setSubmittingState(false);
+      }
     }
   }
 

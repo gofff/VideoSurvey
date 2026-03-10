@@ -52,8 +52,65 @@ body {
   color: var(--muted);
 }
 
+.submit-status {
+  margin: 4px 0 8px;
+  padding: 8px 10px;
+  border: 1px solid #c8d8ea;
+  background: #eef5fc;
+  color: #0b3f72;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.submit-status.hidden {
+  display: none;
+}
+
+.trial-busy .btn {
+  pointer-events: none;
+}
+
 .player-shell {
   position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.58);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.loading-overlay.hidden {
+  display: none !important;
+}
+
+.loading-spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  animation: spin 0.9s linear infinite;
+}
+
+.loading-text {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .viewport {
@@ -260,6 +317,10 @@ body.pseudo-fullscreen #controlsOverlay {
 body.pseudo-fullscreen #controlsOverlay .overlay-status {
   color: #fff;
   justify-content: space-between;
+}
+
+body.pseudo-fullscreen .loading-overlay {
+  border-radius: 0;
 }
 
 @media (max-width: 640px) {
