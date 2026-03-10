@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const MIN_MANUAL_SWITCHES = 2;
+  const MIN_MANUAL_SWITCHES = 1;
   const PARTICIPANT_KEY = "participant_id";
   const MIN_SUBMIT_FEEDBACK_MS = 700;
   const NEXT_TRIAL_TIMEOUT_MS = 8000;
